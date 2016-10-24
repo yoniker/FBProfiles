@@ -15,7 +15,7 @@ import com.facebook.login.widget.LoginButton;
 
 import java.util.Arrays;
 
-public class FirstScreen extends AppCompatActivity {
+public class LoginScreen extends AppCompatActivity {
     private CallbackManager callbackManager;
     private TextView theMessage;
 
@@ -35,9 +35,8 @@ public class FirstScreen extends AppCompatActivity {
             public void onSuccess(LoginResult loginResult) {
                 Toast.makeText(getApplicationContext(),"success",Toast.LENGTH_LONG).show();
                 theMessage.setText("Success");
-                Intent goToSecondScreen = new Intent(getApplicationContext(),SecondScreen.class);
+                Intent goToSecondScreen = new Intent(getApplicationContext(),SearchScreen.class);
                 startActivity(goToSecondScreen);
-                // App code
             }
 
             @Override
