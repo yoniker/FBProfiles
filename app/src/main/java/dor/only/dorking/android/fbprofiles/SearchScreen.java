@@ -4,7 +4,12 @@ import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.NumberPicker;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.facebook.AccessToken;
 import com.facebook.GraphRequest;
@@ -32,9 +37,17 @@ import static com.facebook.AccessToken.getCurrentAccessToken;
   * */
 
 public class SearchScreen extends AppCompatActivity {
-    private TextView theResponseTextView;
-    private TextView playgroundTextView;
+
+    //The views which the user can see
+    private EditText theNameToSearch;
+    private NumberPicker numberOfPeople;
+    private Button goSearchButton;
+    private TextView progressMadeTV;
+
+
     private ArrayList<String> ids=new ArrayList<>();
+    private ArrayList<String> firstNames;
+    Integer namesGotSoFar=new Integer(0);
     private boolean doneFillingIds=false;
 
     //Some String constants given the current Facebook graph API (2.8 as of 24-Oct-2016).
@@ -42,19 +55,124 @@ public class SearchScreen extends AppCompatActivity {
     private static final String FB_PAGING="paging";
     private static final String FB_NEXT_PAGE="next";
     private static final String FB_ID="id";
+    private static final String FB_FIRST_NAME="first_name";
 
 
-    private class myCallBack implements GraphRequest.Callback{
+    private class FirstCallback implements GraphRequest.Callback{
         @Override
         public void onCompleted(GraphResponse response) {
-            theResponseTextView.setText(response.getJSONObject().toString());
-            getIds(181,response.getJSONObject().toString());
+            //When completing our first graph request, go ahead and get all of the ids..
+            getIds(numberOfPeople.getValue(),response.getJSONObject().toString());
+        }
+    }
+
+    private class PersonDetailsCallback implements GraphRequest.Callback{
+        @Override
+        public void onCompleted(GraphResponse response) {
+            JSONObject theResponse=response.getJSONObject();
+            try {
+                int theIndex = ids.indexOf(theResponse.getString(FB_ID));
+                String theFirstName=theResponse.getString(FB_FIRST_NAME);
+                synchronized(firstNames){
+                    firstNames.set(theIndex,theFirstName);
+                }
+
+                synchronized (namesGotSoFar){
+                    namesGotSoFar++;
+                    runOnUiThread( new Runnable() {
+                        @Override
+                        public void run() {
+                            progressMadeTV.setText("Sifted "+namesGotSoFar+'/'+ids.size());
+                        }
+                    });
+                    //
+
+
+
+                    if(namesGotSoFar==ids.size()){
+                        siftByFirstName();
+                        goToPictureActivity();
+
+                    }
+                }
+            }
+            catch (Throwable e){
+                Toast.makeText(getApplicationContext(),e.toString(),Toast.LENGTH_LONG).show();
+
+            }
         }
     }
 
 
+
+
+    private void updateUI(){
+        progressMadeTV.setText(ids.size()+"/"+numberOfPeople.getValue());
+        if(doneFillingIds){
+            moveToNextScreen();
+
+
+        }
+
+    }
+
+    private void moveToNextScreen(){
+        firstNames=new ArrayList<>();
+        for(int i=0; i<ids.size(); ++i){
+            firstNames.add("");
+        }
+        AccessToken theUserToken=getCurrentAccessToken();
+        for(int i=0; i<ids.size(); ++i){
+            String thePath=ids.get(i)+"?fields=id,first_name,age_range";
+            GraphRequest moreDetailsAboutThisPerson=new GraphRequest(theUserToken,thePath);
+            moreDetailsAboutThisPerson.setCallback(new PersonDetailsCallback());
+            moreDetailsAboutThisPerson.executeAsync();
+
+
+
+        }
+
+
+
+
+
+
+    }
+
+
+    //Removes all of the people without the first name being the same as the one we want.
+    private void siftByFirstName(){
+        ArrayList<String> idsWithRelevantFirstName=new ArrayList<>();
+        String theNameWeWant=theNameToSearch.getText().toString();
+        for(int i=0; i<ids.size(); ++i){
+            if(firstNames.get(i).equalsIgnoreCase(theNameWeWant)){
+                idsWithRelevantFirstName.add(ids.get(i));
+
+            }
+
+
+
+        }
+
+        ids=idsWithRelevantFirstName;
+        return;
+    }
+
+
+    private void goToPictureActivity(){
+
+        Intent downloadPicture=new Intent(this,PictureActivity.class);
+        ParceableIds theIds=new ParceableIds(ids);
+        downloadPicture.putExtra(PictureActivity.IDS_DATA_KEY,theIds);
+        startActivity(downloadPicture);
+
+
+    }
+
+
+
     /*getIds.
-    Parameters:
+            Parameters:
 
     numberOfIdsLeft: the number of Ids that we want to get from this point on. Remember that if the actual number of IDs under a certain name is less than this number,
     then we will add only the ones which are available. We add those IDs to the class member ids.
@@ -62,19 +180,7 @@ public class SearchScreen extends AppCompatActivity {
     response: a string of the latest response from Facebook's server which we didn't handle yet.
     */
 
-    private void updateUI(){
-        playgroundTextView.setText("So far we have:"+ids.size()+" Ids,"+ ids.toString());
-        if(doneFillingIds){
-            Intent downloadPicture=new Intent(this,PictureActivity.class);
-            ParceableIds theIds=new ParceableIds(ids);
-            downloadPicture.putExtra(PictureActivity.IDS_DATA_KEY,theIds);
-            startActivity(downloadPicture);
-
-        }
-
-    }
-
-    private void getIds(long numberOfIdsLeft,String serverResponse){
+    private void getIds(int numberOfIdsLeft,String serverResponse){
         if(numberOfIdsLeft<=0){
             doneFillingIds=true;
             updateUI();
@@ -131,7 +237,7 @@ public class SearchScreen extends AppCompatActivity {
 
 
 
-    private void readProfilesPage(final String thePageAddress, final long numberOfIdsLeft){
+    private void readProfilesPage(final String thePageAddress, final int numberOfIdsLeft){
          new AsyncTask<String,Void,String>(){
              @Override
              protected String doInBackground(String... strings) {
@@ -168,12 +274,27 @@ public class SearchScreen extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_second_screen);
-        theResponseTextView=(TextView)findViewById(R.id.the_response_tv);
-        playgroundTextView=(TextView)findViewById(R.id.playground_tv);
-        AccessToken theUserToken=getCurrentAccessToken();
-        GraphRequest searchRequest=new GraphRequest(theUserToken,"search?q=jennifer&type=user");
-        searchRequest.setCallback(new myCallBack());
-        searchRequest.executeAsync();
+        theNameToSearch=(EditText)findViewById(R.id.theNameToSearch);
+        numberOfPeople=(NumberPicker)findViewById(R.id.numberOfPeople);
+        goSearchButton=(Button)findViewById(R.id.goSearchButton);
+        progressMadeTV=(TextView)findViewById(R.id.progressMadeTV);
+
+
+        numberOfPeople.setMaxValue(1000);
+        numberOfPeople.setMinValue(1);
+
+        goSearchButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                AccessToken theUserToken=getCurrentAccessToken();
+                String theName=theNameToSearch.getText().toString();
+                GraphRequest searchRequest=new GraphRequest(theUserToken,"search?q="+'"'+theName+'"'+"&type=user");
+                searchRequest.setCallback(new FirstCallback());
+                searchRequest.executeAsync();
+            }
+        });
+
+
 
     }
 }

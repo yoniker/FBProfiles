@@ -101,7 +101,6 @@ public class PictureActivity extends AppCompatActivity {
         Bundle params = new Bundle();
         params.putBoolean("redirect", false);
         GraphRequest searchRequest=new GraphRequest(theUserToken,theId+"/picture?type=square&height=200",params, HttpMethod.GET);
-        Toast.makeText(this,theId+"/picture?type=square&height=200",Toast.LENGTH_LONG).show();
         searchRequest.setCallback(new PictureActivity.myCallBack());
         searchRequest.executeAsync();
 

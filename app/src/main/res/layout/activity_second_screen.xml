@@ -11,32 +11,37 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="dor.only.dorking.android.fbprofiles.SearchScreen">
 
-    <ScrollView
-        android:layout_width="wrap_content"
-        android:layout_height="0dp"
-        android:layout_weight="1">
 
-        <TextView
-            android:id="@+id/the_response_tv"
-            android:layout_width="wrap_content"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:text="Some default text 2" />
-    </ScrollView>
 
-    <ScrollView
+    <EditText
+        android:id="@+id/theNameToSearch"
         android:layout_width="wrap_content"
-        android:layout_height="0dp"
-        android:layout_weight="1">
+        android:layout_height="wrap_content"
+        android:text="Jennifer"
+        />
 
-    <TextView
-        android:id="@+id/playground_tv"
+    <NumberPicker
+        android:id="@+id/numberOfPeople"
+        android:layout_width="150dp"
+        android:layout_height="150dp"/>
+
+    <Button
+        android:id="@+id/goSearchButton"
+        android:layout_height="wrap_content"
         android:layout_width="wrap_content"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:text="Playground text"
+        android:text="Go"
 
         />
-    </ScrollView>
+
+    <TextView
+        android:id="@+id/progressMadeTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Didn't search yet!"
+        />
+
+
+
+
 
 </LinearLayout>
