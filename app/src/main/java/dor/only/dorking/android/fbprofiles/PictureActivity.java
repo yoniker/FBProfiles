@@ -1,6 +1,10 @@
 package dor.only.dorking.android.fbprofiles;
 
+import android.app.DownloadManager;
+import android.content.Context;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
@@ -16,6 +20,7 @@ import com.squareup.picasso.Picasso;
 
 import org.json.JSONObject;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Random;
 
@@ -28,7 +33,9 @@ public class PictureActivity extends AppCompatActivity {
     private ArrayList<String> ids;
     private TextView personStatsTV;
     private ImageView personImage;
+    private Button downloadPicture;
     private Button showNextPersonButton;
+    private String thePicUrl;
     Random rn = new Random();
 
     //Some string constants related to a picture related to a picture
@@ -47,6 +54,7 @@ public class PictureActivity extends AppCompatActivity {
         personStatsTV=(TextView)findViewById(R.id.personStatsText);
         personImage=(ImageView)findViewById(R.id.theImage);
         showNextPersonButton=(Button)findViewById(R.id.showNextPerson);
+        downloadPicture=(Button) findViewById(R.id.downloadPicture);
         showSomeoneRandom();
         showNextPersonButton.setOnClickListener(
                 new View.OnClickListener() {
@@ -56,6 +64,16 @@ public class PictureActivity extends AppCompatActivity {
                                                     }
                                                 }
 
+
+        );
+
+        downloadPicture.setOnClickListener(
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        downloadThePicture();
+                    }
+                }
 
         );
 
@@ -72,9 +90,10 @@ public class PictureActivity extends AppCompatActivity {
             try {
                 picData=picData.getJSONObject(FB_DATA);
                 if (!picData.getBoolean(FB_SILHOUETTE)) {
-                    String theUrl=picData.getString(FB_URL);
+                    thePicUrl=picData.getString(FB_URL);
 
-                    Picasso.with(getApplicationContext()).load(theUrl).into(personImage);
+                    Picasso.with(getApplicationContext()).load(thePicUrl).into(personImage);
+                    downloadPicture.setEnabled(true);
 
                 } else{
                     personStatsTV.setText(personStatsTV.getText()+" User has no profile Pic!");
@@ -95,6 +114,7 @@ public class PictureActivity extends AppCompatActivity {
     private void showSomeoneRandom(){
         int theUserChosen=rn.nextInt(ids.size());
         String theId=ids.get(theUserChosen);
+        downloadPicture.setEnabled(false);
         personStatsTV.setText(theId+" was chosen, index is:"+theUserChosen+" out of "+ids.size());
         //Now look for the person's pic path
         AccessToken theUserToken=getCurrentAccessToken();
@@ -104,6 +124,37 @@ public class PictureActivity extends AppCompatActivity {
         searchRequest.setCallback(new PictureActivity.myCallBack());
         searchRequest.executeAsync();
 
+
+
+    }
+
+    private void downloadThePicture(){
+        if(thePicUrl==null || thePicUrl.equals("")){
+            return;
+        }
+
+        //Toast.makeText(this,thePicUrl,Toast.LENGTH_LONG).show();
+        File direct = new File(Environment.getExternalStorageDirectory()
+                + "/DorDownloadToHere");
+
+        if (!direct.exists()) {
+            direct.mkdirs();
+        }
+
+        DownloadManager mgr = (DownloadManager)this.getSystemService(Context.DOWNLOAD_SERVICE);
+
+        Uri downloadUri = Uri.parse(thePicUrl);
+        DownloadManager.Request request = new DownloadManager.Request(
+                downloadUri);
+
+        request.setAllowedNetworkTypes(
+                DownloadManager.Request.NETWORK_WIFI
+                        | DownloadManager.Request.NETWORK_MOBILE)
+                .setAllowedOverRoaming(true).setTitle("Demo")
+                .setDescription("Something useful. No, really.")
+                .setDestinationInExternalPublicDir("/DorDownloadToHere", "DorfileName.jpg");
+
+        mgr.enqueue(request);
 
 
     }

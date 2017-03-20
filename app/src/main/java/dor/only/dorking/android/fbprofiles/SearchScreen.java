@@ -57,6 +57,8 @@ public class SearchScreen extends AppCompatActivity {
     private static final String FB_ID="id";
     private static final String FB_FIRST_NAME="first_name";
 
+    private AccessToken theUserToken;
+
 
     private class FirstCallback implements GraphRequest.Callback{
         @Override
@@ -94,6 +96,16 @@ public class SearchScreen extends AppCompatActivity {
                         goToPictureActivity();
 
                     }
+
+                    else{
+
+                        String thePath=ids.get(namesGotSoFar)+"?fields=id,first_name,age_range";
+                        GraphRequest moreDetailsAboutThisPerson=new GraphRequest(theUserToken,thePath);
+                        moreDetailsAboutThisPerson.setCallback(new PersonDetailsCallback());
+                        moreDetailsAboutThisPerson.executeAsync();
+
+
+                    }
                 }
             }
             catch (Throwable e){
@@ -121,16 +133,16 @@ public class SearchScreen extends AppCompatActivity {
         for(int i=0; i<ids.size(); ++i){
             firstNames.add("");
         }
-        AccessToken theUserToken=getCurrentAccessToken();
-        for(int i=0; i<ids.size(); ++i){
-            String thePath=ids.get(i)+"?fields=id,first_name,age_range";
+        //Creating threads in a for loop such as for(int i=0; i<ids.size(); ++i){ doesnt work (for example 133 threads are created on a Nexus 5 phone but no more than that)
+        //So instead,I will call the first one here and make the other calls in the callback from the fb API.
+            String thePath=ids.get(0)+"?fields=id,first_name,age_range";
             GraphRequest moreDetailsAboutThisPerson=new GraphRequest(theUserToken,thePath);
             moreDetailsAboutThisPerson.setCallback(new PersonDetailsCallback());
             moreDetailsAboutThisPerson.executeAsync();
 
 
 
-        }
+
 
 
 
@@ -282,11 +294,11 @@ public class SearchScreen extends AppCompatActivity {
 
         numberOfPeople.setMaxValue(1000);
         numberOfPeople.setMinValue(1);
+        theUserToken=getCurrentAccessToken();
 
         goSearchButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                AccessToken theUserToken=getCurrentAccessToken();
                 String theName=theNameToSearch.getText().toString();
                 GraphRequest searchRequest=new GraphRequest(theUserToken,"search?q="+'"'+theName+'"'+"&type=user");
                 searchRequest.setCallback(new FirstCallback());
