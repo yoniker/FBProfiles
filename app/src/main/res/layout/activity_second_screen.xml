@@ -14,7 +14,7 @@
 
 
     <EditText
-        android:id="@+id/theNameToSearch"
+        android:id="@+id/theNamesToSearch"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Jennifer"
@@ -23,7 +23,8 @@
     <NumberPicker
         android:id="@+id/numberOfPeople"
         android:layout_width="150dp"
-        android:layout_height="150dp"/>
+        android:layout_height="150dp"
+        />
 
     <Button
         android:id="@+id/goSearchButton"
@@ -31,6 +32,13 @@
         android:layout_width="wrap_content"
         android:text="Go"
 
+        />
+
+    <Button
+        android:id="@+id/saveNamesToSharedPreferences"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:text="Save"
         />
 
     <TextView

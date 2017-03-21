@@ -34,15 +34,30 @@
         android:text="Show Next Random User"
         />
 
-    <Button
-        android:id="@+id/downloadPicture"
+
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Download Picture"
-        android:enabled="false"
+        android:orientation="horizontal"
+        >
+        <Button
+            android:id="@+id/downloadPictures"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Download All Pictures"
+            android:enabled="false"
 
 
-        />
+            />
+        <TextView
+            android:id="@+id/downloadStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=""
+
+            />
+
+    </LinearLayout>
 
 
 </LinearLayout>
